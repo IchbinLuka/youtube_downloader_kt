@@ -17,12 +17,15 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.ui.window.singleWindowApplication
+import downloader.prepareYtDlExe
 import theme.YTDownloaderTheme
 import widgets.History
+import java.io.File
+import java.io.FileOutputStream
 
 fun main() = singleWindowApplication {
-    ProcessBuilder ()
     var text by remember { mutableStateOf("Hello, World!") }
+    prepareYtDlExe()
 
     MainScreen()
 }
