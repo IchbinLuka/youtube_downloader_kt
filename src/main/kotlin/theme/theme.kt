@@ -13,7 +13,11 @@ private val DarkColorPalette = darkColors(
 )
 
 private val LightColorPalette = lightColors(
-
+    background = Color.White,
+    surface = Color.White,
+    onBackground = Color.Black,
+    primary = Color.Red,
+    secondary = Color(0xfffc5f2a)
 )
 
 @Composable

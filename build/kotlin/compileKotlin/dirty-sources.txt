@@ -1,2 +1,0 @@
-C:\Users\Luka\IdeaProjects\Youtube_Downloader\src\main\kotlin\theme\theme.kt
-C:\Users\Luka\IdeaProjects\Youtube_Downloader\src\main\kotlin\Main.kt
