@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
@@ -11,21 +9,43 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.ui.window.singleWindowApplication
-import downloader.prepareYtDlExe
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import data.VideoInfo
+import downloader.YtDownloader
 import theme.YTDownloaderTheme
 import widgets.History
+import widgets.LabeledCheckbox
 import java.io.File
-import java.io.FileOutputStream
 
 fun main() = singleWindowApplication {
     var text by remember { mutableStateOf("Hello, World!") }
-    prepareYtDlExe()
+    val path = YtDownloader.prepareYtDlExe()
+    val dir = File(path).parentFile
+    val processBuilder = ProcessBuilder(path, "https://www.youtube.com/watch?v=3BfZETS_kgY", "-P ${dir.absolutePath}", "--write-info-json", "--no-download")
+    val process = processBuilder.start()
+
+    process.waitFor()
+    val mapper = jacksonObjectMapper()
+
+    val files = dir.listFiles()
+    println(path)
+    if (files != null) {
+        try {
+            val infoFile = files.first { it.name.endsWith(".info.json") }
+            val info = mapper.readValue<VideoInfo>(String(infoFile.readBytes()), VideoInfo::class.java)
+        } catch (e: NoSuchElementException) {
+            println("No info json found")
+        }
+    } else {
+        println("No children found")
+    }
+    val downloader = YtDownloader(path)
+    println("Downloading Video")
+    downloader.downloadVideo("https://www.youtube.com/watch?v=3BfZETS_kgY", dir.absolutePath) {
+        println(it)
+    }
 
     MainScreen()
 }
@@ -33,13 +53,15 @@ fun main() = singleWindowApplication {
 @Preview
 @Composable
 fun MainScreen() {
+    var text by remember { mutableStateOf(listOf<VideoInfo>()) }
+
     YTDownloaderTheme {
         Column {
             SettingsBar(
                 onButtonClick = { _, _ -> }
             )
         }
-        History()
+        History(listOf())
     }
 }
 
@@ -93,24 +115,5 @@ fun SettingsBar(
                 label = "Audio only"
             )
         }
-    }
-}
-
-@Composable
-fun LabeledCheckbox(
-    modifier: Modifier = Modifier,
-    label: String,
-    checked: Boolean,
-    onCheckedChange: ((Boolean) -> Unit)?
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-        Text(text = label)
     }
 }
