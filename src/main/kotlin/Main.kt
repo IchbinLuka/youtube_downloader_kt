@@ -11,64 +11,82 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import data.VideoInfo
 import downloader.YtDownloader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import theme.YTDownloaderTheme
 import widgets.History
+import widgets.HistoryItemData
 import widgets.LabeledCheckbox
-import java.io.File
 
 fun main() = singleWindowApplication {
     var text by remember { mutableStateOf("Hello, World!") }
-    val path = YtDownloader.prepareYtDlExe()
-    val dir = File(path).parentFile
-    val processBuilder = ProcessBuilder(path, "https://www.youtube.com/watch?v=3BfZETS_kgY", "-P ${dir.absolutePath}", "--write-info-json", "--no-download")
-    val process = processBuilder.start()
 
-    process.waitFor()
-    val mapper = jacksonObjectMapper()
-
-    val files = dir.listFiles()
-    println(path)
-    if (files != null) {
-        try {
-            val infoFile = files.first { it.name.endsWith(".info.json") }
-            val info = mapper.readValue<VideoInfo>(String(infoFile.readBytes()), VideoInfo::class.java)
-        } catch (e: NoSuchElementException) {
-            println("No info json found")
-        }
-    } else {
-        println("No children found")
-    }
-    val downloader = YtDownloader(path)
-    println("Downloading Video")
-    downloader.downloadVideo("https://www.youtube.com/watch?v=3BfZETS_kgY", dir.absolutePath) {
-        println(it)
-    }
 
     MainScreen()
+}
+
+suspend fun downloadVideo(url: String, ytDl: YtDownloader, history: MutableList<HistoryItemData>, path: String) {
+    val info = ytDl.getVideoInfo(url)
+    if (info != null) {
+        val data = HistoryItemData(
+            info = info,
+            progress = mutableStateOf(0.0)
+        )
+        history.add(data)
+        ytDl.downloadVideo(url = url, destination = path) {
+            data.progress.value = it
+        }
+    }
 }
 
 @Preview
 @Composable
 fun MainScreen() {
-    var text by remember { mutableStateOf(listOf<VideoInfo>()) }
+    val coroutineScope = rememberCoroutineScope()
+    var history: MutableList<HistoryItemData> = mutableStateListOf<HistoryItemData>()
+
+    val path = YtDownloader.prepareYtDlExe()
+    val ytDl = YtDownloader(path)
+
+    val currentPath = System.getProperty("user.dir")
+
+    val onClick: (String, Boolean) -> Unit = { url, _ ->
+        coroutineScope.launch {
+            launch(Dispatchers.Default) {
+                println("Fetching info")
+                val info = ytDl.getVideoInfo(url)
+                println("Fetched info")
+                if (info != null) {
+                    val data = HistoryItemData(
+                        info = info,
+                        progress = mutableStateOf(0.0)
+                    )
+                    history.add(data)
+                    ytDl.downloadVideo(url = url, destination = currentPath) {
+                        data.progress.value = it
+                    }
+                }
+            }
+        }
+    }
 
     YTDownloaderTheme {
         Column {
             SettingsBar(
-                onButtonClick = { _, _ -> }
+                onButtonClick = onClick
             )
+            History(history)
         }
-        History(listOf())
     }
 }
+
 
 @Composable
 fun SettingsBar(
     onButtonClick: (String, Boolean) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var link by remember { mutableStateOf("")}
     var audioOnly by remember { mutableStateOf(false) }
     Surface(

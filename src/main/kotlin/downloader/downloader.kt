@@ -38,6 +38,7 @@ class YtDownloader(
         val reader = BufferedReader(InputStreamReader(process.inputStream))
 
         while (true) {
+            println("Downloading")
             val line = reader.readLine() ?: break
             val percentLocation = line.indexOfFirst { it == '%' }
             if (line.startsWith("[download]") && percentLocation != -1) {
