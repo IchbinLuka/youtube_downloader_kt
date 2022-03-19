@@ -36,12 +36,11 @@ class YtDownloader(
         val processBuilder = ProcessBuilder(ytExePath, url, "-P $destination")
         val process = processBuilder.start()
         val reader = BufferedReader(InputStreamReader(process.inputStream))
-
         while (true) {
-            println("Downloading")
             val line = reader.readLine() ?: break
             val percentLocation = line.indexOfFirst { it == '%' }
-            if (line.startsWith("[download]") && percentLocation != -1) {
+            if (line.contains("[download]") && percentLocation != -1) {
+                println("Downloading")
                 val progressString = line.substring(10, percentLocation)
                 val progress = progressString.toDoubleOrNull()
                 if (progress != null) {
@@ -75,3 +74,9 @@ class YtDownloader(
 
     }
 }
+
+data class YtDownloaderProcess(
+    var onProgress: (Double) -> Unit,
+    var isFinished: Boolean,
+    val pid: Long
+)

@@ -1,4 +1,4 @@
-package widgets
+package widgets.history
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -7,24 +7,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import data.VideoInfo
 import util.loadNetworkPicture
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 
 data class HistoryItemData(
     val info: VideoInfo,
-    var progress: MutableState<Double>
+    var onProgress: (Double) -> Unit
 )
 
 @Composable
 fun History(
-    videos: List<HistoryItemData>
+    downloads: List<HistoryItemData>
 ) {
     LazyColumn {
-        items(videos) {
+        items(downloads) {
             HistoryRow(it)
         }
     }
@@ -34,7 +38,12 @@ fun History(
 fun HistoryRow(
     data: HistoryItemData
 ) {
-    //val progress: Double by remember { data.progress }
+    var progress by remember { mutableStateOf(0.0) }
+    data.onProgress = {
+        println("Called onProgress")
+        progress = it
+    }
+
     val thumbnails = data.info.thumbnails
     Row {
         Box(
@@ -55,7 +64,7 @@ fun HistoryRow(
         }
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            "${data.progress.value}%"
+            "${progress}%"
         )
     }
 }

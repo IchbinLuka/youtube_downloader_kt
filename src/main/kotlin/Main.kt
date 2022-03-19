@@ -15,9 +15,9 @@ import downloader.YtDownloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import theme.YTDownloaderTheme
-import widgets.History
-import widgets.HistoryItemData
 import widgets.LabeledCheckbox
+import widgets.history.History
+import widgets.history.HistoryItemData
 
 fun main() = singleWindowApplication {
     var text by remember { mutableStateOf("Hello, World!") }
@@ -26,7 +26,7 @@ fun main() = singleWindowApplication {
     MainScreen()
 }
 
-suspend fun downloadVideo(url: String, ytDl: YtDownloader, history: MutableList<HistoryItemData>, path: String) {
+/*suspend fun downloadVideo(url: String, ytDl: YtDownloader, history: MutableList<HistoryItemData>, path: String) {
     val info = ytDl.getVideoInfo(url)
     if (info != null) {
         val data = HistoryItemData(
@@ -38,7 +38,7 @@ suspend fun downloadVideo(url: String, ytDl: YtDownloader, history: MutableList<
             data.progress.value = it
         }
     }
-}
+}*/
 
 @Preview
 @Composable
@@ -60,12 +60,12 @@ fun MainScreen() {
                 if (info != null) {
                     val data = HistoryItemData(
                         info = info,
-                        progress = mutableStateOf(0.0)
+                        onProgress = {
+                            println("Leeel")
+                        }
                     )
                     history.add(data)
-                    ytDl.downloadVideo(url = url, destination = currentPath) {
-                        data.progress.value = it
-                    }
+                    ytDl.downloadVideo(url = url, destination = currentPath, onProgress = data.onProgress)
                 }
             }
         }
