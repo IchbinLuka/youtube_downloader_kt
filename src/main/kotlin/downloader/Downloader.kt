@@ -43,10 +43,6 @@ class YtDownloader(
         while (true) {
             val line = reader.readLine() ?: break
             val percentLocation = line.indexOfFirst { it == '%' }
-<<<<<<< HEAD:src/main/kotlin/downloader/Downloader.kt
-=======
-            println(line)
->>>>>>> temp:src/main/kotlin/downloader/downloader.kt
             if (line.contains("[download]") && percentLocation != -1) {
                 println("Downloading")
                 val progressString = line.substring(10, percentLocation)
