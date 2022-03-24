@@ -22,8 +22,12 @@ class YtDownloader(
         return if (files != null) {
             try {
                 val infoFile = files.first { it.name.endsWith(".info.json") }
-                mapper.readValue(String(infoFile.readBytes()), VideoInfo::class.java)
+                val content = String(infoFile.readBytes())
+                infoFile.delete()
+                mapper.readValue(content, VideoInfo::class.java)
+
             } catch (e: NoSuchElementException) {
+                println(e)
                 println("No info json found")
                 null
             }
@@ -38,10 +42,11 @@ class YtDownloader(
         val reader = BufferedReader(InputStreamReader(process.inputStream))
 
         while (true) {
-            println("Downloading")
             val line = reader.readLine() ?: break
             val percentLocation = line.indexOfFirst { it == '%' }
-            if (line.startsWith("[download]") && percentLocation != -1) {
+            println(line)
+            if (line.contains("[download]") && percentLocation != -1) {
+                println("Downloading")
                 val progressString = line.substring(10, percentLocation)
                 val progress = progressString.toDoubleOrNull()
                 if (progress != null) {

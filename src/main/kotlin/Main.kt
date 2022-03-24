@@ -44,7 +44,7 @@ suspend fun downloadVideo(url: String, ytDl: YtDownloader, history: MutableList<
 @Composable
 fun MainScreen() {
     val coroutineScope = rememberCoroutineScope()
-    var history: MutableList<HistoryItemData> = mutableStateListOf<HistoryItemData>()
+    val history: MutableList<HistoryItemData> = mutableStateListOf<HistoryItemData>()
 
     val path = YtDownloader.prepareYtDlExe()
     val ytDl = YtDownloader(path)
@@ -52,23 +52,21 @@ fun MainScreen() {
     val currentPath = System.getProperty("user.dir")
 
     val onClick: (String, Boolean) -> Unit = { url, _ ->
-        coroutineScope.launch {
-            launch(Dispatchers.Default) {
-                println("Fetching info")
-                val info = ytDl.getVideoInfo(url)
-                println("Fetched info")
-                if (info != null) {
-                    val data = HistoryItemData(
-                        info = info,
-                        progress = mutableStateOf(0.0)
-                    )
-                    history.add(data)
-                    ytDl.downloadVideo(url = url, destination = currentPath) {
-                        data.progress.value = it
-                    }
+        Thread {
+            println("Fetching info")
+            val info = ytDl.getVideoInfo(url)
+            println("Fetched info")
+            if (info != null) {
+                val data = HistoryItemData(
+                    info = info,
+                    progress = mutableStateOf(0.0)
+                )
+                history.add(0, data)
+                ytDl.downloadVideo(url = url, destination = currentPath) {
+                    data.progress.value = it
                 }
             }
-        }
+        }.start()
     }
 
     YTDownloaderTheme {
@@ -86,7 +84,6 @@ fun MainScreen() {
 fun SettingsBar(
     onButtonClick: (String, Boolean) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
     var link by remember { mutableStateOf("")}
     var audioOnly by remember { mutableStateOf(false) }
     Surface(
@@ -115,7 +112,10 @@ fun SettingsBar(
             Spacer(modifier = Modifier.width(3.dp))
             Button(
                 elevation = ButtonDefaults.elevation(defaultElevation = 1.dp, pressedElevation = 0.dp),
-                onClick = { onButtonClick(link, audioOnly) },
+                onClick = {
+                        onButtonClick(link, audioOnly)
+                        link = ""
+                    },
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = Color.White,
                     contentColor = Color.Gray
