@@ -22,8 +22,12 @@ class YtDownloader(
         return if (files != null) {
             try {
                 val infoFile = files.first { it.name.endsWith(".info.json") }
-                mapper.readValue(String(infoFile.readBytes()), VideoInfo::class.java)
+                val content = String(infoFile.readBytes())
+                infoFile.delete()
+                mapper.readValue(content, VideoInfo::class.java)
+
             } catch (e: NoSuchElementException) {
+                println(e)
                 println("No info json found")
                 null
             }
@@ -39,6 +43,10 @@ class YtDownloader(
         while (true) {
             val line = reader.readLine() ?: break
             val percentLocation = line.indexOfFirst { it == '%' }
+<<<<<<< HEAD:src/main/kotlin/downloader/Downloader.kt
+=======
+            println(line)
+>>>>>>> temp:src/main/kotlin/downloader/downloader.kt
             if (line.contains("[download]") && percentLocation != -1) {
                 println("Downloading")
                 val progressString = line.substring(10, percentLocation)
