@@ -8,7 +8,8 @@ import java.io.FileOutputStream
 import java.io.InputStreamReader
 
 class YtDownloader(
-    private val ytExePath: String
+    private val ytExePath: String,
+    private val ffmpegPath: String? = null
 ) {
 
     fun getVideoInfo(url: String): VideoInfo? {
@@ -36,8 +37,29 @@ class YtDownloader(
         }
     }
 
-    fun downloadVideo(url: String, destination: String, onProgress: (Double) -> Unit) {
+    fun downloadVideo(
+        url: String,
+        destination: String,
+        onProgress: (Double) -> Unit,
+        outputType: FileType = fileTypes[0]
+    ) {
         val processBuilder = ProcessBuilder(ytExePath, url, "-P $destination")
+        val command = mutableListOf<String>()
+        command.apply {
+            add(ytExePath)
+            add(url)
+            add("-P $destination")
+            if (ffmpegPath != null) {
+                add("--ffmpeg-location $ffmpegPath")
+                if (outputType.audioOnly) {
+                    add("-x") // Extract audio
+                    add("--audio-format ${outputType.fileEnding}")
+                } else {
+                    add("--format ${outputType.fileEnding}")
+                }
+            }
+        }
+        processBuilder.command(command)
         val process = processBuilder.start()
         val reader = BufferedReader(InputStreamReader(process.inputStream))
         while (true) {
@@ -78,9 +100,3 @@ class YtDownloader(
 
     }
 }
-
-data class YtDownloaderProcess(
-    var onProgress: (Double) -> Unit,
-    var isFinished: Boolean,
-    val pid: Long
-)
