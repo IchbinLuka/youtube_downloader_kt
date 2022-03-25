@@ -25,19 +25,20 @@ fun MainScreen() {
 
     val onClick: (String, FileType) -> Unit = { url, type ->
         Thread {
-            println("Fetching info")
-            val info = ytDl.getVideoInfo(url)
-            println("Fetched info")
-            if (info != null) {
-                val data = HistoryItemData(
-                    info = info,
-                    progress = mutableStateOf(0.0)
-                )
-                history.add(0, data)
-                ytDl.downloadVideo(url = url, destination = currentPath, onProgress = {
+            val data = HistoryItemData(
+                info = mutableStateOf(null),
+                progress = mutableStateOf(0.0)
+            )
+            history.add(0, data)
+            ytDl.downloadVideo(url = url, destination = currentPath,
+                onProgress = {
                     data.progress.value = it
-                })
-            }
+                },
+                outputType = type,
+                onVideoInfo = {
+                    data.info.value = it
+                }
+            )
         }.start()
     }
 

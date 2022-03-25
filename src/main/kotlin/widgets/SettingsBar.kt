@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +24,9 @@ fun SettingsBar(
 ) {
     var link by remember { mutableStateOf("") }
     var fileType by remember { mutableStateOf(fileTypes[0]) }
+    val borderModifier = Modifier
+        .border(width = 1.dp, color = Color.LightGray, shape = RoundedCornerShape(5.dp))
+
     Surface(
         modifier = Modifier.padding(10.dp)
     ) {
@@ -30,9 +35,7 @@ fun SettingsBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.align(Alignment.CenterVertically)
-                    .border(width = 1.dp, color = Color.LightGray, shape = RoundedCornerShape(5.dp))
-                    .padding(5.dp)
+                modifier = borderModifier.padding(5.dp).align(Alignment.CenterVertically)
             ) {
                 BasicTextField(
                     value = link,
@@ -46,6 +49,13 @@ fun SettingsBar(
                 }
             }
             Spacer(modifier = Modifier.width(3.dp))
+            Surface(
+                modifier = borderModifier
+            ) {
+                OutputFormatSelector {
+                    fileType = it
+                }
+            }
             Button(
                 elevation = ButtonDefaults.elevation(defaultElevation = 1.dp, pressedElevation = 0.dp),
                 onClick = {
@@ -63,44 +73,50 @@ fun SettingsBar(
             ) {
                 Text("Download")
             }
-            OutputFormatSelector {
-                fileType = it
-            }
         }
     }
 }
 
 @Composable
 fun OutputFormatSelector(
-    onSelect: (FileType) -> Unit
+    modifier: Modifier = Modifier,
+    onSelect: (FileType) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var currentIndex by remember { mutableStateOf(0) }
-    Box {
-        Text(
-            fileTypes[currentIndex].fileEnding,
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .clickable {
-                    expanded = true
-                }
-                .padding(7.dp)
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            fileTypes.forEachIndexed { i, s ->
-                DropdownMenuItem(
-                    onClick = {
-                        currentIndex = i
-                        expanded = false
-                        onSelect(s)
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(4.dp))
+            .clickable {
+                expanded = true
+            }
+            .padding(7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box {
+            Text(
+                fileTypes[currentIndex].fileEnding,
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                fileTypes.forEachIndexed { i, s ->
+                    DropdownMenuItem(
+                        onClick = {
+                            currentIndex = i
+                            expanded = false
+                            onSelect(s)
+                        }
+                    ) {
+                        Text(s.fileEnding)
                     }
-                ) {
-                    Text(s.fileEnding)
                 }
             }
         }
+        Icon(
+            Icons.Filled.ArrowDropDown, null,
+            modifier = Modifier.size(15.dp)
+        )
     }
 }

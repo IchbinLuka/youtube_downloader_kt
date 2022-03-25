@@ -2,9 +2,11 @@ package downloader
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import data.VideoInfo
+import util.findJson
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStreamReader
 
 class YtDownloader(
@@ -12,12 +14,13 @@ class YtDownloader(
     private val ffmpegPath: String? = null
 ) {
 
+    private val jsonMapper = jacksonObjectMapper()
+
     fun getVideoInfo(url: String): VideoInfo? {
         val dir = File(ytExePath).parentFile
         val processBuilder = ProcessBuilder(ytExePath, url, "-P ${dir.absolutePath}", "--write-info-json", "--no-download")
         val process = processBuilder.start()
         process.waitFor()
-        val mapper = jacksonObjectMapper()
 
         val files = dir.listFiles()
         return if (files != null) {
@@ -25,7 +28,7 @@ class YtDownloader(
                 val infoFile = files.first { it.name.endsWith(".info.json") }
                 val content = String(infoFile.readBytes())
                 infoFile.delete()
-                mapper.readValue(content, VideoInfo::class.java)
+                jsonMapper.readValue(content, VideoInfo::class.java)
 
             } catch (e: NoSuchElementException) {
                 println(e)
@@ -41,32 +44,67 @@ class YtDownloader(
         url: String,
         destination: String,
         onProgress: (Double) -> Unit,
+        onVideoInfo: ((VideoInfo) -> Unit)? = null,
         outputType: FileType = fileTypes[0]
     ) {
-        val processBuilder = ProcessBuilder(ytExePath, url, "-P $destination")
-        val command = mutableListOf<String>()
-        command.apply {
-            add(ytExePath)
-            add(url)
-            add("-P $destination")
-            if (ffmpegPath != null) {
-                add("--ffmpeg-location $ffmpegPath")
+        val runtime = Runtime.getRuntime()
+        //val command = mutableListOf<String>(ytExePath, url)
+        val builder = StringBuilder(ytExePath)
+        val ffmpegInPATH = try {
+            runtime.exec("ffmpeg -version")  // Check if ffmpeg is installed
+            true
+        } catch (_: IOException) {
+            false
+        }
+        builder.apply {
+            append(" -P $destination")
+            append(" --write-info-json")
+            if (ffmpegPath != null || ffmpegInPATH) {
+                if (ffmpegPath != null) {
+                    append(" --ffmpeg-location $ffmpegPath")
+                }
                 if (outputType.audioOnly) {
-                    add("-x") // Extract audio
-                    add("--audio-format ${outputType.fileEnding}")
+                    append(" --extract-audio") // Extract audio
+                    append(" --audio-format ${outputType.fileEnding}")
                 } else {
-                    add("--format ${outputType.fileEnding}")
+                    append(" --format ${outputType.fileEnding}")
                 }
             }
+            if (url.startsWith("https://")) {
+                append(" $url")
+            } else {
+                append(" ytsearch:\"${url}\" --max-downloads 1")
+            }
         }
-        processBuilder.command(command)
-        val process = processBuilder.start()
+        println(builder.toString()) //TODO: Remove println
+        val process = runtime.exec(builder.toString())
         val reader = BufferedReader(InputStreamReader(process.inputStream))
+        var metadataPrepared = false
         while (true) {
             val line = reader.readLine() ?: break
+            println(line)
+            if (metadataPrepared) {
+                val json = findJson(File(destination))
+                json?.let {
+                    val content = String(it.readBytes())
+                    it.delete()
+                    if (onVideoInfo != null) {
+                        try {
+                            onVideoInfo(
+                                jsonMapper.readValue(content, VideoInfo::class.java)
+                            )
+                        } catch (_: Exception) {
+                            println("Could not parse json file")
+                        }
+                    }
+                }
+            }
+            if (line.startsWith("[info] Writing video metadata")) {
+                metadataPrepared = true
+            }
             val percentLocation = line.indexOfFirst { it == '%' }
+            println(line)
             if (line.contains("[download]") && percentLocation != -1) {
-                println("Downloading")
                 val progressString = line.substring(10, percentLocation)
                 val progress = progressString.toDoubleOrNull()
                 if (progress != null) {
@@ -74,6 +112,7 @@ class YtDownloader(
                 }
             }
         }
+        println(process.waitFor())
     }
 
     companion object {
@@ -89,7 +128,7 @@ class YtDownloader(
             }
             val ytDlExe = File("${dir.absolutePath}/yt-dlp.exe")
             if (ytDlExe.exists()) {
-                ytDlExe.delete()
+                return ytDlExe.absolutePath
             }
             ytDlExe.createNewFile()
             val outStream = FileOutputStream(ytDlExe)

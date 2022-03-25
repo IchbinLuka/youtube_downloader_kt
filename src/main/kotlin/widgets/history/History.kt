@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -24,7 +25,7 @@ import util.loadNetworkPicture
 
 
 data class HistoryItemData(
-    val info: VideoInfo,
+    val info: MutableState<VideoInfo?>,
     var progress: MutableState<Double>
 )
 
@@ -85,7 +86,7 @@ fun HistoryRow(
     data: HistoryItemData
 ) {
 
-    val thumbnails = data.info.thumbnails
+    val thumbnails = data.info.value?.thumbnails
 
     val progress by animateFloatAsState(data.progress.value.toFloat())
 
@@ -113,22 +114,59 @@ fun HistoryRow(
             Box(
                 //modifier = Modifier.height(30.dp)
             ) {
-                Image(
-                    bitmap = loadNetworkPicture(thumbnails[thumbnails.size - 2].url), "",
-                    contentScale = ContentScale.FillHeight
-                )
+                if (thumbnails != null) {
+                    Image(
+                        bitmap = loadNetworkPicture(thumbnails[thumbnails.size - 2].url), "",
+                        contentScale = ContentScale.FillHeight
+                    )
+                } else {
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(16f / 9f),
+                            color = Color.LightGray
+                        ) {}
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
             }
-            Spacer(Modifier.width(10.dp))
-            Column {
-                Text(
-                    text = data.info.title,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.h6
-                )
-                Text(
-                    data.info.channel,
-                    style = MaterialTheme.typography.body1
-                )
+            Spacer(Modifier.width(20.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(0.7f)
+            ) {
+                val titleStyle = MaterialTheme.typography.body1
+                val channelStyle = MaterialTheme.typography.subtitle1
+                if (data.info.value != null) {
+                    Text(
+                        text = data.info.value!!.title,
+                        fontWeight = FontWeight.Bold,
+                        style = titleStyle
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        data.info.value!!.channel,
+                        style = channelStyle
+                    )
+                } else {
+                    Surface(
+                        color = Color.LightGray,
+                        modifier = Modifier
+                        .size(
+                            width = 100.dp,
+                            height = titleStyle.fontSize.value.dp)) {}
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = Color.LightGray,
+                        modifier = Modifier
+                            .size(
+                                width = 75.dp,
+                                height = channelStyle.fontSize.value.dp)) {}
+                }
             }
             Spacer(modifier = Modifier.weight(1f))
             Surface(
