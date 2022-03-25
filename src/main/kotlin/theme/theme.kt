@@ -1,10 +1,12 @@
 package theme
 
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Typography
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 
 private val DarkColorPalette = darkColors(
     background = Color.Black,
@@ -20,6 +22,12 @@ private val LightColorPalette = lightColors(
     secondary = Color(0xfffc5f2a)
 )
 
+private val typography = Typography(
+    subtitle2 = TextStyle(
+        color = Color.Gray
+    )
+)
+
 @Composable
 fun YTDownloaderTheme(
     useDarkTheme: Boolean = false,
@@ -33,6 +41,7 @@ fun YTDownloaderTheme(
 
     MaterialTheme(
         colors = colors,
-        content = content
+        content = content,
+        typography = typography
     )
 }

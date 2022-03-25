@@ -9,7 +9,9 @@ import widgets.SettingsBar
 import widgets.history.History
 import widgets.history.HistoryItemData
 
-fun main() = singleWindowApplication {
+fun main() = singleWindowApplication(
+    title = "Download Video from Youtube"
+) {
     MainScreen()
 }
 

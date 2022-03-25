@@ -1,8 +1,9 @@
 package data
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Thumbnail(
     @JsonProperty("height")
     val height: Int?,

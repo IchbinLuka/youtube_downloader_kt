@@ -2,19 +2,34 @@ package downloader
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import data.VideoInfo
+import util.extractFile
 import util.findJson
 import java.io.BufferedReader
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
 
 class YtDownloader(
     private val ytExePath: String,
-    private val ffmpegPath: String? = null
+    private var ffmpegPath: String? = null
 ) {
 
     private val jsonMapper = jacksonObjectMapper()
+
+    private val ffmpegInPATH = try {
+        Runtime.getRuntime().exec("ffmpeg -version")  // Check if ffmpeg is installed
+        true
+    } catch (_: IOException) {
+        false
+    }
+
+    init {
+        if (!ffmpegInPATH && ffmpegPath == null) {
+            ffmpegPath = prepareFfmpeg()
+        }
+    }
+
+
 
     fun getVideoInfo(url: String): VideoInfo? {
         val dir = File(ytExePath).parentFile
@@ -50,12 +65,6 @@ class YtDownloader(
         val runtime = Runtime.getRuntime()
         //val command = mutableListOf<String>(ytExePath, url)
         val builder = StringBuilder(ytExePath)
-        val ffmpegInPATH = try {
-            runtime.exec("ffmpeg -version")  // Check if ffmpeg is installed
-            true
-        } catch (_: IOException) {
-            false
-        }
         builder.apply {
             append(" -P $destination")
             append(" --write-info-json")
@@ -93,8 +102,9 @@ class YtDownloader(
                             onVideoInfo(
                                 jsonMapper.readValue(content, VideoInfo::class.java)
                             )
-                        } catch (_: Exception) {
+                        } catch (e: Exception) {
                             println("Could not parse json file")
+                            println(e)
                         }
                     }
                 }
@@ -116,25 +126,22 @@ class YtDownloader(
     }
 
     companion object {
-        fun prepareYtDlExe(): String {
-            val mainClass = Class.forName("MainKt")
-            val stream = mainClass.getResourceAsStream("yt-dlp.exe")
+        private fun prepareExe(name: String): String {
+            val path = "${System.getProperty("java.io.tmpdir")}/yt_downloader/$name"
+            val dir = File(path)
+            if (dir.exists()) {
+                return path
+            }
+            extractFile(name, path)
+            return path
+        }
 
-            val tmpdir: String = System.getProperty("java.io.tmpdir")
-            println(tmpdir)
-            val dir = File("$tmpdir/yt_downloader")
-            if (!dir.exists()) {
-                dir.mkdir()
-            }
-            val ytDlExe = File("${dir.absolutePath}/yt-dlp.exe")
-            if (ytDlExe.exists()) {
-                return ytDlExe.absolutePath
-            }
-            ytDlExe.createNewFile()
-            val outStream = FileOutputStream(ytDlExe)
-            outStream.write(stream!!.readAllBytes())
-            outStream.close()
-            return ytDlExe.absolutePath
+        fun prepareYtDlExe(): String {
+            return prepareExe("yt-dlp.exe")
+        }
+
+        fun prepareFfmpeg(): String {
+            return prepareExe("ffmpeg.exe")
         }
 
     }

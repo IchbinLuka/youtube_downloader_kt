@@ -1,6 +1,5 @@
 package widgets.history
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
@@ -102,18 +101,18 @@ fun HistoryRow(
             Surface(
                 color = Color(0xff22b566),
                 modifier = Modifier
-                    .fillMaxWidth(progress / 100f)
+                    .fillMaxWidth(
+                        if (progress < 100f) progress / 100f
+                        else 0f
+                    )
                     .fillMaxHeight()
             ) {}
-            //Spacer(modifier = Modifier.weight(1 - data.progress.value.toFloat()))
         }
         Row(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
-            Box(
-                //modifier = Modifier.height(30.dp)
-            ) {
+            Box {
                 if (thumbnails != null) {
                     Image(
                         bitmap = loadNetworkPicture(thumbnails[thumbnails.size - 2].url), "",
@@ -171,10 +170,11 @@ fun HistoryRow(
             Spacer(modifier = Modifier.weight(1f))
             Surface(
                 shape = RoundedCornerShape(4.dp),
-                color = Color(0x7fffffff)
+                color = Color(0x7fffffff),
             ) {
                 Text(
-                    "${data.progress.value}%"
+                    "${data.progress.value}%",
+                    modifier = Modifier.padding(5.dp)
                 )
             }
         }

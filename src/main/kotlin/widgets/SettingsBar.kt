@@ -45,7 +45,10 @@ fun SettingsBar(
                     onValueChange = {link = it}
                 )
                 if (link == "") {
-                    Text("Enter link")
+                    Text(
+                        "Enter link",
+                        style = MaterialTheme.typography.subtitle2
+                    )
                 }
             }
             Spacer(modifier = Modifier.width(3.dp))
@@ -70,6 +73,7 @@ fun SettingsBar(
                 contentPadding = PaddingValues(horizontal = 4.dp),
                 modifier = Modifier.align(Alignment.CenterVertically).height(30.dp)
                     .padding(horizontal = 5.dp)
+                    .fillMaxWidth()
             ) {
                 Text("Download")
             }
@@ -96,6 +100,7 @@ fun OutputFormatSelector(
         Box {
             Text(
                 fileTypes[currentIndex].fileEnding,
+                style = MaterialTheme.typography.subtitle2
             )
             DropdownMenu(
                 expanded = expanded,
@@ -109,7 +114,7 @@ fun OutputFormatSelector(
                             onSelect(s)
                         }
                     ) {
-                        Text(s.fileEnding)
+                        Text(s.fileEnding, style = MaterialTheme.typography.subtitle1)
                     }
                 }
             }
