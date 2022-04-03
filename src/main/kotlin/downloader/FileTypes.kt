@@ -1,5 +1,8 @@
 package downloader
 
+/**
+ * List containing all currently supported filetypes
+ */
 val fileTypes = listOf(
     FileType("best", false),
     FileType("mp4", false),
@@ -12,6 +15,10 @@ val fileTypes = listOf(
     FileType("flac", true),
 )
 
+/**
+ * Data class that stores relevant filetype information such as the [fileEnding] and whether
+ * this is an [audioOnly] filetype
+ * */
 data class FileType(
     val fileEnding: String,
     val audioOnly: Boolean

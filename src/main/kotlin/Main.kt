@@ -8,7 +8,7 @@ import theme.YTDownloaderTheme
 import widgets.SettingsBar
 import widgets.history.History
 import widgets.history.HistoryItemData
-
+/** Entry point of the app */
 fun main() = singleWindowApplication(
     title = "Download Video from Youtube"
 ) {

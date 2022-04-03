@@ -9,6 +9,10 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
 
+/**
+ * Wrapper for yt-dlp executable which provides utilities for fetching video information
+ * and downloading Videos
+ */
 class YtDownloader(
     private val ytExePath: String,
     private var ffmpegPath: String? = null
@@ -55,6 +59,7 @@ class YtDownloader(
         }
     }
 
+    /** Download Video with [url] to [destination] as [outputType] */
     fun downloadVideo(
         url: String,
         destination: String,
@@ -126,6 +131,7 @@ class YtDownloader(
     }
 
     companion object {
+        /** Extracts the file with [name] from the jar to the systems temp directory */
         private fun prepareExe(name: String): String {
             val path = "${System.getProperty("java.io.tmpdir")}/yt_downloader/$name"
             val dir = File(path)
@@ -135,11 +141,11 @@ class YtDownloader(
             extractFile(name, path)
             return path
         }
-
+        /** Prepares the yt-dlp executable by extracting it to the Temp dir */
         fun prepareYtDlExe(): String {
             return prepareExe("yt-dlp.exe")
         }
-
+        /** Prepares the ffmpeg executable by extracting it to the Temp dir */
         fun prepareFfmpeg(): String {
             return prepareExe("ffmpeg.exe")
         }

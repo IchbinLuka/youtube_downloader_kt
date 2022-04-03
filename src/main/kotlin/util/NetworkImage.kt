@@ -8,6 +8,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import javax.imageio.ImageIO
 
+/**
+ * Returns the image bitmap of a network image with [link]
+ */
 fun loadNetworkPicture(link: String): ImageBitmap {
     val url = URL(link)
     val connection = url.openConnection() as HttpURLConnection
